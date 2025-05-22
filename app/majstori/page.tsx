@@ -262,56 +262,6 @@ export default function MajstoriPage() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="flex gap-2 items-center">
-                  <Filter className="h-4 w-4" />
-                  <span>Categories</span>
-                  {selectedCategories.length > 0 && (
-                    <Badge variant="secondary">{selectedCategories.length}</Badge>
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>Select Categories</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {allCategories.map((category) => (
-                  <DropdownMenuCheckboxItem
-                    key={category}
-                    checked={selectedCategories.includes(category)}
-                    onCheckedChange={() => toggleCategory(category)}
-                  >
-                    {category}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex gap-2 items-center">
-                  <Languages className="h-4 w-4" />
-                  <span>Languages</span>
-                  {selectedLanguages.length > 0 && (
-                    <Badge variant="secondary">{selectedLanguages.length}</Badge>
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>Select Languages</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {allLanguages.map((language) => (
-                  <DropdownMenuCheckboxItem
-                    key={language}
-                    checked={selectedLanguages.includes(language)}
-                    onCheckedChange={() => toggleLanguage(language)}
-                  >
-                    {language}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex gap-2 items-center">
                   <ChevronDown className="h-4 w-4" />
                   <span>Sort</span>
                 </Button>
@@ -336,18 +286,57 @@ export default function MajstoriPage() {
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <div>
-            <Label htmlFor="location" className="text-sm font-medium mb-1">Location</Label>
-            <Input
-              id="location"
-              placeholder="Filter by location or service area"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-            />
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="flex gap-2 items-center">
+                <Filter className="h-4 w-4" />
+                <span>Categories</span>
+                {selectedCategories.length > 0 && (
+                  <Badge variant="secondary">{selectedCategories.length}</Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Select Categories</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {allCategories.map((category) => (
+                <DropdownMenuCheckboxItem
+                  key={category}
+                  checked={selectedCategories.includes(category)}
+                  onCheckedChange={() => toggleCategory(category)}
+                >
+                  {category}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           
-          <div className="flex items-center gap-2 mt-6">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="flex gap-2 items-center">
+                <Languages className="h-4 w-4" />
+                <span>Languages</span>
+                {selectedLanguages.length > 0 && (
+                  <Badge variant="secondary">{selectedLanguages.length}</Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Select Languages</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {allLanguages.map((language) => (
+                <DropdownMenuCheckboxItem
+                  key={language}
+                  checked={selectedLanguages.includes(language)}
+                  onCheckedChange={() => toggleLanguage(language)}
+                >
+                  {language}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <div className="flex items-center gap-2">
             <Checkbox 
               id="emergency" 
               checked={emergencyOnly}
@@ -362,7 +351,7 @@ export default function MajstoriPage() {
             </label>
           </div>
           
-          <div className="flex items-center gap-2 mt-6">
+          <div className="flex items-center gap-2">
             <Checkbox 
               id="weekend" 
               checked={weekendEveningOnly}

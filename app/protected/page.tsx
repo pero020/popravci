@@ -98,26 +98,15 @@ export default async function AccountPage(props: {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="location_name">Location</Label> {/* Changed from location to location_name to match schema*/}
+                  <Label htmlFor="location">Location</Label> {/* Changed from location to location to match schema*/}
                   <div className="flex gap-2">
                     <Input
-                      id="location_name" // Changed from location to location_name
-                      name="location_name" // Changed from location to location_name
-                      defaultValue={majstor?.location_name || ''} // Changed from location to location_name
+                      id="location" // Changed from location to location
+                      name="location" // Changed from location to location
+                      defaultValue={majstor?.location || ''} // Changed from location to location
                       placeholder="City, Country"
                       className="flex-1"
                     />
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="icon" 
-                      asChild
-                      className="flex-shrink-0"
-                    >
-                      <a href="/protected/location" title="Manage Location">
-                        <Settings className="h-4 w-4" />
-                      </a>
-                    </Button>
                   </div>
                 </div>
                 

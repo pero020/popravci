@@ -19,15 +19,9 @@ export default function OnboardingPage() {
   const [basicInfo, setBasicInfo] = useState({
     name: "",
     phone: "",
+    location: "",
     categories: [] as string[],
   });
-  const [currentLocationData, setCurrentLocationData] = useState<LocationState>({
-    latitude: 45.815399,
-    longitude: 15.966568,
-    location: "",
-    service_radius: 20,
-  });
-  const [isSavingLocation, setIsSavingLocation] = useState(false); // Renamed for clarity, can be used if saving location separately
   const [isPublishing, setIsPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,37 +46,9 @@ export default function OnboardingPage() {
     setBasicInfo({
       name: formData.get("name") as string,
       phone: formData.get("phone") as string,
+      location: formData.get("location") as string,
       categories: formData.getAll("categories").map(c => c.toString()),
     });
-    setActiveTab("location");
-  };
-
-  // Step 2: Location data handler from LocationManager
-  const handleLocationDataChange = (newLocationData: LocationState) => {
-    setCurrentLocationData(newLocationData);
-  };
-
-  // Handler for the new "Continue" button in the location tab
-  const handleContinueFromLocation = async () => {
-    // Currently, saving happens at the final publish step.
-    // If you wanted to save location here before proceeding:
-    // setIsSavingLocation(true);
-    // try {
-    //   if (!userId) throw new Error("User ID not found.");
-    //   await saveLocationAction({ 
-    //     userId, 
-    //     latitude: currentLocationData.latitude,
-    //     longitude: currentLocationData.longitude,
-    //     location_name: currentLocationData.location,
-    //     service_radius: currentLocationData.service_radius
-    //   });
-    //   toast.success("Location saved!");
-    // } catch (err: any) {
-    //   toast.error("Failed to save location: " + err.message);
-    //   setIsSavingLocation(false);
-    //   return; // Don't proceed if save fails
-    // }
-    // setIsSavingLocation(false);
     setActiveTab("publish");
   };
 
@@ -102,10 +68,7 @@ export default function OnboardingPage() {
       basicInfo.categories.forEach(c => formData.append("categories", c));
       
       // Use currentLocationData for the final submission
-      formData.append("location_name", currentLocationData.location);
-      formData.append("latitude", currentLocationData.latitude.toString());
-      formData.append("longitude", currentLocationData.longitude.toString());
-      formData.append("service_radius", currentLocationData.service_radius.toString());
+      formData.append("location", basicInfo.location);
       
       await onboardingAction(formData);
       router.push("/protected");
@@ -135,7 +98,6 @@ export default function OnboardingPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3 mb-8">
           <TabsTrigger value="basic-info">1. Basic Info</TabsTrigger>
-          <TabsTrigger value="location">2. Location</TabsTrigger>
           <TabsTrigger value="publish">3. Publish</TabsTrigger>
         </TabsList>
         <TabsContent value="basic-info">
@@ -147,6 +109,10 @@ export default function OnboardingPage() {
             <div>
               <label className="block font-medium mb-1" htmlFor="phone">Phone Number</label>
               <input className="w-full border rounded px-3 py-2" id="phone" name="phone" type="tel" defaultValue={basicInfo.phone} />
+            </div>
+            <div>
+              <label className="block font-medium mb-1" htmlFor="location">Phone Number</label>
+              <input className="w-full border rounded px-3 py-2" id="locaiton" name="phlocationone" defaultValue={basicInfo.location} />
             </div>
             <div>
               <label className="block font-medium mb-1">Services Offered</label>
@@ -169,21 +135,6 @@ export default function OnboardingPage() {
             </div>
           </form>
         </TabsContent>
-        <TabsContent value="location">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 mb-8">
-            <LocationManager
-              initialLocation={currentLocationData} // Pass the current location state
-              onLocationDataChange={handleLocationDataChange} // Listen for changes
-              isOnboarding={true}
-            />
-            <div className="flex justify-between mt-6 pt-6 border-t border-slate-200">
-              <Button variant="ghost" onClick={() => setActiveTab("basic-info")}>Back</Button>
-              <Button onClick={handleContinueFromLocation} disabled={isSavingLocation}>
-                {isSavingLocation ? "Saving..." : "Continue to Publish"}
-              </Button>
-            </div>
-          </div>
-        </TabsContent>
         <TabsContent value="publish">
           <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 mb-8 space-y-6">
             <h2 className="text-xl font-semibold mb-4">Review & Publish</h2>
@@ -192,14 +143,6 @@ export default function OnboardingPage() {
               <div>Name: {basicInfo.name}</div>
               <div>Phone: {basicInfo.phone}</div>
               <div>Categories: {basicInfo.categories.join(", ")}</div>
-            </div>
-            <div>
-              <h3 className="font-medium mb-1">Location</h3>
-              <div>Location Name: {currentLocationData.location}</div>
-              <div>
-          Coordinates: {currentLocationData.latitude.toFixed(6)}, {currentLocationData.longitude.toFixed(6)}
-              </div>
-              <div>Service Radius: {currentLocationData.service_radius} km</div>
             </div>
             {error && <div className="text-red-600">{error}</div>}
             <div className="flex justify-between pt-4">

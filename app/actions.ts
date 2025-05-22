@@ -244,7 +244,7 @@ export const updateProfileAction = async (formData: FormData) => {
 // Helper functions for different profile updates
 async function updateBasicProfile(formData: FormData, supabase: any, userId: string) {
   const name = formData.get("name")?.toString();
-  const location_name = formData.get("location_name")?.toString(); // Ensure this is location_name
+  const location = formData.get("location")?.toString(); // Ensure this is location
   // const service_area = formData.get("service_area")?.toString(); // Remove service_area
   const bio = formData.get("bio")?.toString();
   const emergency_available = formData.get("emergency_available") === "on";
@@ -261,7 +261,7 @@ async function updateBasicProfile(formData: FormData, supabase: any, userId: str
   
   const updateData: any = {
     name,
-    location_name,
+    location,
     // service_area, // Remove from update
     bio,
     emergency_available,
@@ -391,7 +391,7 @@ export const onboardingAction = async (formData: FormData) => {
   // Extract form data
   const name = formData.get("name")?.toString();
   const phone = formData.get("phone")?.toString();
-  const location_name = formData.get("location_name")?.toString(); // Renamed from location to location_name
+  const location = formData.get("location")?.toString(); // Renamed from location to location
   // const service_area = formData.get("service_area")?.toString(); // Remove service_area
   const categories = formData.getAll("categories").map(category => category.toString());
   
@@ -415,7 +415,7 @@ export const onboardingAction = async (formData: FormData) => {
   const insertData: any = {
     user_id: user.id,
     name,
-    location_name,
+    location,
     // service_area, // Remove from insert
     categories,
     contacts: phone ? [phone] : [],
@@ -446,14 +446,14 @@ export const saveLocationAction = async ({
   userId,
   latitude,
   longitude,
-  location_name, // Renamed from location to location_name
+  location, // Renamed from location to location
   // service_area, // Remove service_area
   service_radius
 }: {
   userId: string;
   latitude: number;
   longitude: number;
-  location_name: string; // Renamed
+  location: string; // Renamed
   // service_area: string; // Remove
   service_radius: number;
 }) => {
@@ -472,7 +472,7 @@ export const saveLocationAction = async ({
     .single();
 
   const locationData = {
-    location_name, // Use renamed variable
+    location, // Use renamed variable
     // service_area, // Remove
     latitude,
     longitude,

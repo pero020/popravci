@@ -40,7 +40,7 @@ export async function generateMetadata(
   // Construct a good SEO title and description
   const title = `${majstor.name} - ${majstor.categories?.join(', ')}`
   const description = majstor.bio || 
-    `${majstor.name} is a professional based in ${majstor.location_name}. Services: ${majstor.categories?.join(', ')}. Contact: ${majstor.contacts?.join(', ')}`
+    `${majstor.name} is a professional based in ${majstor.location}. Services: ${majstor.categories?.join(', ')}. Contact: ${majstor.contacts?.join(', ')}`
 
   return {
     title,
@@ -97,7 +97,7 @@ export default async function MajstorPage({ params }: { params: paramsType }) {
               
               <div className="flex items-start gap-2">
                 <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
-                <p>{majstor.location_name || 'Location not specified'}</p>
+                <p>{majstor.location || 'Location not specified'}</p>
               </div>
             </div>
 
