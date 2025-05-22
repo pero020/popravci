@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
+import Script from 'next/script'
 import {
   AlertCircle,
   Languages,
@@ -14,9 +15,57 @@ import {
   Calendar
 } from 'lucide-react'
 import { simpleSanitizeHtml } from '@/utils/sanitize-html'
+import { SERVICE_CATEGORIES } from '@/utils/categories'
 import '@/app/majstor-bio.css'
 
 export type paramsType = Promise<{ id: string }>;
+
+/**
+ * Strip HTML tags for use in meta descriptions
+ * @param html HTML content to strip
+ * @returns Plain text without HTML tags
+ */
+function stripHtmlForDescription(html: string | null): string {
+  if (!html) return '';
+  return html
+    .replace(/<[^>]*>/g, ' ') // Remove all HTML tags
+    .replace(/&nbsp;/g, ' ') // Replace &nbsp; with space
+    .replace(/\s+/g, ' ')    // Replace multiple spaces with single space
+    .trim()
+    .substring(0, 160);      // Limit to 160 chars for meta description
+}
+
+/**
+ * Get secondary categories (subcategories) for a given primary category
+ * Only used for SEO, not for display
+ */
+function getSecondaryCategories(primaryCategories: string[] | null): string[] {
+  if (!primaryCategories || !primaryCategories.length) return [];
+  
+  // Remove numbering from primary categories if present
+  const normalizedPrimaryCategories = primaryCategories.map(cat => {
+    // Remove numbering prefix like "1. " or "10. " if it exists
+    return cat.replace(/^\d+\.\s*/, '');
+  });
+  
+  // Get all subcategories for matching primary categories
+  const secondaryCategories: string[] = [];
+  
+  SERVICE_CATEGORIES.forEach(category => {
+    // Clean up the category name to match our normalized format
+    const normalizedCategoryName = category.name.replace(/^\d+\.\s*/, '');
+    
+    // If this category matches one of our primary categories
+    if (normalizedPrimaryCategories.includes(normalizedCategoryName)) {
+      // Add all its subcategories
+      category.subcategories.forEach(subcategory => {
+        secondaryCategories.push(subcategory.name);
+      });
+    }
+  });
+  
+  return secondaryCategories;
+}
 
 // Generate metadata for SEO purposes
 export async function generateMetadata(
@@ -39,19 +88,54 @@ export async function generateMetadata(
     }
   }
 
+  // Create a plain text description from HTML bio
+  const bioPlainText = stripHtmlForDescription(majstor.bio);
+  
+  // Get secondary categories for SEO
+  const secondaryCategories = getSecondaryCategories(majstor.categories);
+  
   // Construct a good SEO title and description
-  const title = `${majstor.name} - ${majstor.categories?.join(', ')}`
-  const description = majstor.bio || 
-    `${majstor.name} is a professional based in ${majstor.location}. Services: ${majstor.categories?.join(', ')}. Contact: ${majstor.contacts?.join(', ')}`
+  const title = `${majstor.name} - ${majstor.categories?.join(', ')}`;
+  const description = `${majstor.name} is a professional for ${majstor.categories?.join(', ')} based in ${majstor.location}.` + 
+    (majstor.emergency_available ? ' Available for emergency services.' : '') +
+    (majstor.weekend_evening ? ' Works weekends and evenings.' : '');
+
+  // Keywords for improved SEO - now including secondary categories
+  const keywords = [
+    majstor.name,
+    majstor.location,
+    ...(majstor.categories || []),
+    ...secondaryCategories, // Add all relevant subcategories
+    ...(majstor.languages || []),
+    'professional',
+    'services',
+    majstor.emergency_available ? 'emergency services' : '',
+    majstor.weekend_evening ? 'weekend service' : '',
+  ].filter(Boolean);
 
   return {
     title,
     description,
+    keywords: keywords.join(', '),
     openGraph: {
       title,
       description,
       type: 'profile',
-    }
+      locale: 'hr_HR',
+      siteName: 'Popravci',
+      images: [{
+        url: `/opengraph-image.png`, // Default image, consider using a profile image if available
+        alt: `${majstor.name} - Professional ${majstor.categories?.join(', ')}`,
+      }],
+    },
+    twitter: {
+      card: 'summary',
+      title,
+      description,
+    },
+    alternates: {
+      canonical: `/majstori/${id}`,
+    },
   }
 }
 
@@ -66,7 +150,6 @@ export async function generateStaticParams() {
   })) || []
 }
 
-
 export default async function MajstorPage({ params }: { params: paramsType }) {
   const supabase = await createClient()
   const { id } = await params;
@@ -80,8 +163,47 @@ export default async function MajstorPage({ params }: { params: paramsType }) {
     notFound()
   }
 
+  // Create structured data for SEO
+  const bioPlainText = stripHtmlForDescription(majstor.bio);
+  
+  // Get secondary categories for structured data
+  const secondaryCategories = getSecondaryCategories(majstor.categories);
+  
+  // Create a combined list of services for structured data
+  const allServices = [...(majstor.categories || []), ...secondaryCategories];
+  
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'ProfessionalService',
+    name: majstor.name,
+    description: bioPlainText || `Professional ${majstor.categories?.join(', ')} services`,
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: majstor.location || ''
+    },
+    telephone: majstor.contacts?.[0] || '',
+    openingHoursSpecification: majstor.weekend_evening ? {
+      '@type': 'OpeningHoursSpecification',
+      dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+      opens: '00:00',
+      closes: '23:59'
+    } : undefined,
+    availableLanguage: majstor.languages,
+    hasOfferCatalog: {
+      '@type': 'OfferCatalog',
+      name: 'Services',
+      itemListElement: allServices.map((service: string) => ({
+        '@type': 'Service',
+        name: service
+      }))
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Add structured data for search engines */}
+      <Script id="structured-data" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
+      
       <div className="mb-6">
         <Button variant="ghost" asChild size="sm" className="mb-4">
           <Link href="/majstori" className="flex items-center">
