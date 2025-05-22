@@ -45,9 +45,9 @@ export default function Hero() {
             <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <Wrench className="h-6 w-6 text-primary" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Provjerene vještine</h3>
+            <h3 className="text-lg font-semibold mb-2">Hitni popravci</h3>
             <p className="text-slate-600 text-center">
-              Svi majstori su provjereni i ocijenjeni za kvalitetu njihovog rada
+              Pretražite majstore koji su dostupni odmah, čak i vikendom
             </p>
           </div>
           <div className="flex flex-col items-center p-6 bg-white rounded-lg shadow-sm border border-slate-100">
