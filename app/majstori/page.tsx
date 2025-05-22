@@ -5,9 +5,9 @@ import { createClient } from '@/utils/supabase/client'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import Link from 'next/link'
+import Image from 'next/image'
 import { TOP_CATEGORIES } from '@/utils/categories'
 import { 
   DropdownMenu, 
@@ -29,7 +29,8 @@ import {
   Phone,
   Clock,
   Calendar,
-  ArrowRight
+  ArrowRight,
+  User
 } from 'lucide-react'
 
 type Majstor = {
@@ -46,6 +47,7 @@ type Majstor = {
   languages: string[]
   bio: string
   created_at: string
+  profile_picture?: string | null
 }
 
 type SortField = 'name' | 'wait_time_days' | 'location' | 'created_at'
@@ -390,13 +392,32 @@ export default function MajstoriPage() {
               {currentItems.map((majstor) => (
                 <div key={majstor.id} className="bg-card rounded-lg overflow-hidden shadow group hover:shadow-md transition-shadow">
                   <div className="p-6">
-                    <Link href={`/majstori/${majstor.id}`} className="block">
-                      <h2 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">{majstor.name}</h2>
-                    </Link>
-                    
-                    <div className="flex items-start gap-2 mb-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-                      <p className="text-sm">{majstor.location || 'Location not specified'}</p>
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className="relative h-16 w-16 rounded-full overflow-hidden bg-slate-200 flex-shrink-0">
+                        {majstor.profile_picture ? (
+                          <Image
+                            src={majstor.profile_picture}
+                            alt={majstor.name}
+                            fill
+                            sizes="4rem"
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center text-slate-400">
+                            <User className="h-8 w-8" />
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <Link href={`/majstori/${majstor.id}`} className="block">
+                          <h2 className="text-xl font-semibold mb-1 group-hover:text-primary transition-colors">{majstor.name}</h2>
+                        </Link>
+                        
+                        <div className="flex items-start gap-1">
+                          <MapPin className="h-3 w-3 text-muted-foreground mt-0.5" />
+                          <p className="text-sm">{majstor.location || 'Location not specified'}</p>
+                        </div>
+                      </div>
                     </div>
                     
                     {majstor.service_area && (

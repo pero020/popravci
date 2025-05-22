@@ -1,10 +1,11 @@
 import { createClient, createStaticClient } from '@/utils/supabase/server'
 import { notFound } from 'next/navigation'
 import { Metadata, ResolvingMetadata } from 'next'
+import Image from 'next/image' // Added
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, User } from 'lucide-react' // Added User
 import Script from 'next/script'
 import {
   AlertCircle,
@@ -77,7 +78,7 @@ export async function generateMetadata(
   const { id } = await params;
   const { data: majstor } = await supabase
     .from('majstori')
-    .select('*')
+    .select('*') // profile_picture will be included
     .eq('id', id)
     .single()
 
@@ -113,6 +114,10 @@ export async function generateMetadata(
     majstor.weekend_evening ? 'weekend service' : '',
   ].filter(Boolean);
 
+  const openGraphImages = majstor.profile_picture
+    ? [{ url: majstor.profile_picture, alt: `${majstor.name} - Professional ${majstor.categories?.join(', ')}` }]
+    : [{ url: `/opengraph-image.png`, alt: `${majstor.name} - Professional ${majstor.categories?.join(', ')}` }];
+
   return {
     title,
     description,
@@ -123,10 +128,7 @@ export async function generateMetadata(
       type: 'profile',
       locale: 'hr_HR',
       siteName: 'Popravci',
-      images: [{
-        url: `/opengraph-image.png`, // Default image, consider using a profile image if available
-        alt: `${majstor.name} - Professional ${majstor.categories?.join(', ')}`,
-      }],
+      images: openGraphImages, // Updated to use profile picture if available
     },
     twitter: {
       card: 'summary',
@@ -215,17 +217,34 @@ export default async function MajstorPage({ params }: { params: paramsType }) {
       
       <div className="bg-card rounded-lg shadow overflow-hidden">
         <div className="p-6 md:p-8">
-          <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6 border-b pb-6">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">{majstor.name}</h1>
-              
-              <div className="flex items-start gap-2">
-                <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
-                <p>{majstor.location || 'Location not specified'}</p>
+          <div className="flex flex-col md:flex-row justify-between md:items-start gap-6 mb-6 border-b pb-6">
+            <div className="flex items-center gap-4"> {/* Changed from items-start to items-center */}
+              {/* Profile Image */}
+              <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden bg-slate-200 flex-shrink-0"> {/* Reduced size */}
+                {majstor.profile_picture ? (
+                  <Image
+                    src={majstor.profile_picture}
+                    alt={`${majstor.name}'s profile picture`}
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center text-slate-400">
+                    <User className="w-1/2 h-1/2" />
+                  </div>
+                )}
+              </div>
+              {/* Name and Location */}
+              <div>
+                <h1 className="text-3xl font-bold mb-1 md:mb-2">{majstor.name}</h1>
+                <div className="flex items-center gap-2 text-slate-600">
+                  <MapPin className="h-5 w-5" />
+                  <p>{majstor.location || 'Location not specified'}</p>
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 mt-4 md:mt-0">
               {majstor.contacts && majstor.contacts.length > 0 && (
                 <div>
                   <h3 className="text-sm font-medium mb-1">Contact Information</h3>

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BioEditor } from "@/components/account/bio-editor";
+import { ProfilePicture } from "@/components/account/profile-picture";
 import { TOP_CATEGORIES } from "@/utils/categories";
 import { 
   User, 
@@ -75,6 +76,26 @@ export default async function AccountPage(props: {
           <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
             <h2 className="text-xl font-semibold mb-4">Personal Information</h2>
             
+            <div className="mb-6 flex flex-col md:flex-row gap-6 items-center">
+              <div>
+                <ProfilePicture 
+                  userId={user.id}
+                  existingUrl={majstor?.profile_picture || null}
+                  size="lg"
+                />
+              </div>
+              
+              <div className="flex-1 w-full">
+                <p className="text-sm text-slate-600 mb-2">
+                  Add a professional profile photo to make your profile more approachable and recognizable.
+                  Your profile picture will be displayed on your profile and in search results.
+                </p>
+                <p className="text-xs text-slate-500">
+                  Recommended: a clear headshot or professional photo. Maximum size: 5MB.
+                </p>
+              </div>
+            </div>
+            
             <form action={updateProfileAction} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -100,12 +121,12 @@ export default async function AccountPage(props: {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label> {/* Changed from location to location to match schema*/}
+                  <Label htmlFor="location">Location</Label>
                   <div className="flex gap-2">
                     <Input
-                      id="location" // Changed from location to location
-                      name="location" // Changed from location to location
-                      defaultValue={majstor?.location || ''} // Changed from location to location
+                      id="location"
+                      name="location"
+                      defaultValue={majstor?.location || ''}
                       placeholder="City, Country"
                       className="flex-1"
                     />
