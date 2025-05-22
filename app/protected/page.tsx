@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BioEditor } from "@/components/account/bio-editor";
 import { 
   User, 
   Settings, 
@@ -114,14 +115,7 @@ export default async function AccountPage(props: {
               
               <div className="space-y-2">
                 <Label htmlFor="bio">Bio/Description</Label>
-                <textarea
-                  id="bio"
-                  name="bio"
-                  rows={4}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                  placeholder="Tell potential clients about yourself, your experience, and your services"
-                  defaultValue={majstor?.bio || ''}
-                />
+                <BioEditor initialBio={majstor?.bio || ''} />
               </div>
               
               <div className="space-y-4 pt-4">

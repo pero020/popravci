@@ -273,7 +273,7 @@ export default function MajstoriPage() {
                   Name {sortField === 'name' && (sortOrder === 'asc' ? <ChevronUp className="ml-2 h-4 w-4" /> : <ChevronDown className="ml-2 h-4 w-4" />)}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleSort('wait_time_days')}>
-                  Wait Time {sortField === 'wait_time_days' && (sortOrder === 'asc' ? <ChevronUp className="ml-2 h-4 w-4" /> : <ChevronDown className="ml-2 h-4 w-4" />)}
+                  Typical Wait Time {sortField === 'wait_time_days' && (sortOrder === 'asc' ? <ChevronUp className="ml-2 h-4 w-4" /> : <ChevronDown className="ml-2 h-4 w-4" />)}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleSort('location')}>
                   Location {sortField === 'location' && (sortOrder === 'asc' ? <ChevronUp className="ml-2 h-4 w-4" /> : <ChevronDown className="ml-2 h-4 w-4" />)}
@@ -407,18 +407,17 @@ export default function MajstoriPage() {
                     {majstor.categories && majstor.categories.length > 0 && (
                       <div className="mb-3">
                         <div className="flex flex-wrap gap-1">
-                          {majstor.categories.map((category, index) => (
+                          {majstor.categories.slice(0, 3).map((category, index) => (
                             <Badge key={index} variant="outline">
                               {category}
                             </Badge>
                           ))}
+                          {majstor.categories.length > 3 && (
+                            <Badge variant="outline">+{majstor.categories.length - 3} more</Badge>
+                          )}
                         </div>
                       </div>
                     )}
-                    
-                    <div className="mb-3">
-                      <p className="text-sm line-clamp-2">{majstor.bio || 'No bio available'}</p>
-                    </div>
                     
                     <div className="flex gap-4 mb-3">
                       {majstor.wait_time_days !== null && (

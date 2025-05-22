@@ -13,6 +13,8 @@ import {
   Clock,
   Calendar
 } from 'lucide-react'
+import { simpleSanitizeHtml } from '@/utils/sanitize-html'
+import '@/app/majstor-bio.css'
 
 export type paramsType = Promise<{ id: string }>;
 
@@ -125,9 +127,10 @@ export default async function MajstorPage({ params }: { params: paramsType }) {
           
           <div className="mb-6">
             <h3 className="text-lg font-medium mb-2">Bio</h3>
-            <div className="prose max-w-none dark:prose-invert">
-              <p>{majstor.bio || 'No bio available for this majstor.'}</p>
-            </div>
+            <div 
+              className="prose max-w-none dark:prose-invert majstor-bio" 
+              dangerouslySetInnerHTML={{ __html: simpleSanitizeHtml(majstor.bio || 'No bio available for this majstor.') }} 
+            />
           </div>
           
           {majstor.categories && majstor.categories.length > 0 && (
@@ -150,7 +153,7 @@ export default async function MajstorPage({ params }: { params: paramsType }) {
                   <Clock className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h4 className="font-medium">Wait Time</h4>
+                  <h4 className="font-medium">Typical Wait Time</h4>
                   <p className="text-sm text-muted-foreground">{majstor.wait_time_days} days</p>
                 </div>
               </div>
