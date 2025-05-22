@@ -8,11 +8,11 @@ export default function Hero() {
       <div className="container px-4 md:px-6 flex flex-col items-center text-center space-y-8">
         <div className="space-y-3">
           <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl">
-            Find the Perfect Professional for Your{" "}
-            <span className="text-primary">Repair Needs</span>
+            Pronađite savršenog majstora za vaše{" "}
+            <span className="text-primary">potrebe</span>
           </h1>
           <p className="mx-auto max-w-[700px] text-slate-600 md:text-lg lg:text-xl">
-            Connect with skilled, verified craftsmen in your area. Get quality repairs and services when you need them most.
+            Povežite se s iskusnim, provjerenim majstorima u vašem području. Dobijte kvalitetne popravke i usluge kada su vam najpotrebnije.
           </p>
         </div>
 
@@ -20,12 +20,12 @@ export default function Hero() {
           <Button asChild size="lg" className="flex-1">
             <Link href="/majstori">
               <Search className="mr-2 h-4 w-4" />
-              Find Professionals
+              Pronađi majstore
             </Link>
           </Button>
           <Button variant="outline" asChild size="lg" className="flex-1">
             <Link href="/protected">
-              My Account
+              Moj račun
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
@@ -36,29 +36,27 @@ export default function Hero() {
             <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <Search className="h-6 w-6 text-primary" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Search & Compare</h3>
+            <h3 className="text-lg font-semibold mb-2">Pretraži i usporedi</h3>
             <p className="text-slate-600 text-center">
-              Browse through a variety of professionals with detailed profiles and verified reviews.
+              Brzo pronađite kvalificirane majstore za vaš specifični problem
             </p>
           </div>
           <div className="flex flex-col items-center p-6 bg-white rounded-lg shadow-sm border border-slate-100">
             <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <Wrench className="h-6 w-6 text-primary" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Skilled Experts</h3>
+            <h3 className="text-lg font-semibold mb-2">Provjerene vještine</h3>
             <p className="text-slate-600 text-center">
-              Access a network of vetted craftsmen specializing in all types of repairs and maintenance.
+              Svi majstori su provjereni i ocijenjeni za kvalitetu njihovog rada
             </p>
           </div>
           <div className="flex flex-col items-center p-6 bg-white rounded-lg shadow-sm border border-slate-100">
             <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-              <svg className="h-6 w-6 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <ArrowRight className="h-6 w-6 text-primary" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Emergency Service</h3>
+            <h3 className="text-lg font-semibold mb-2">Direktan kontakt</h3>
             <p className="text-slate-600 text-center">
-              Filter for professionals who offer emergency and weekend/evening availability.
+              Izravno se povežite s majstorima bez posrednika
             </p>
           </div>
         </div>
