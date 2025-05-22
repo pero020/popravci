@@ -14,17 +14,20 @@ import {
   Calendar
 } from 'lucide-react'
 
+export type paramsType = Promise<{ id: string }>;
+
 // Generate metadata for SEO purposes
 export async function generateMetadata(
-  { params }: { params: { id: string } },
+  { params }: { params: paramsType },
   parent: ResolvingMetadata
 ): Promise<Metadata> {
   // Use the static client that doesn't depend on cookies
   const supabase = createStaticClient()
+  const { id } = await params;
   const { data: majstor } = await supabase
     .from('majstori')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (!majstor) {
@@ -61,12 +64,14 @@ export async function generateStaticParams() {
   })) || []
 }
 
-export default async function MajstorPage({ params }: { params: { id: string } }) {
+
+export default async function MajstorPage({ params }: { params: paramsType }) {
   const supabase = await createClient()
+  const { id } = await params;
   const { data: majstor } = await supabase
     .from('majstori')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (!majstor) {
