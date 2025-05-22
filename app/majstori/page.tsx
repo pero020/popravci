@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import Link from 'next/link'
+import { TOP_CATEGORIES } from '@/utils/categories'
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -300,7 +301,7 @@ export default function MajstoriPage() {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>Select Categories</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {allCategories.map((category) => (
+              {TOP_CATEGORIES.map((category) => (
                 <DropdownMenuCheckboxItem
                   key={category}
                   checked={selectedCategories.includes(category)}

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import LocationMap from "@/components/ui/location-map";
+import { TOP_CATEGORIES } from "@/utils/categories";
 
 interface OnboardingFormProps {
   action: any;
@@ -100,9 +101,7 @@ export default function OnboardingForm({ action, message }: OnboardingFormProps)
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-          {['Plumbing', 'Electrical', 'Carpentry', 'Painting', 'HVAC', 
-            'Appliance Repair', 'Landscaping', 'Cleaning', 'Moving', 
-            'Roofing', 'Flooring', 'General Contractor'].map((category) => (
+          {TOP_CATEGORIES.map((category) => (
             <div key={category} className="flex items-center space-x-2">
               <Checkbox 
                 id={`category_${category}`}

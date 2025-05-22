@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BioEditor } from "@/components/account/bio-editor";
+import { TOP_CATEGORIES } from "@/utils/categories";
 import { 
   User, 
   Settings, 
@@ -203,9 +204,7 @@ export default async function AccountPage(props: {
                 <Label>Select the categories that best describe your services</Label>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                  {['Plumbing', 'Electrical', 'Carpentry', 'Painting', 'HVAC', 
-                    'Appliance Repair', 'Landscaping', 'Cleaning', 'Moving', 
-                    'Roofing', 'Flooring', 'General Contractor'].map((category) => (
+                  {TOP_CATEGORIES.map((category) => (
                     <div key={category} className="flex items-center space-x-2">
                       <Checkbox 
                         id={`category_${category}`}
