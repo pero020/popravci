@@ -17,14 +17,14 @@ export default function Hero() {
         </div>
 
         <div className="w-full max-w-md flex flex-col sm:flex-row gap-3">
-          <Button asChild size="lg" className="flex-1">
-            <Link href="/majstori">
+          <Button asChild size="lg" className="flex-1 min-h-[50px] h-auto">
+            <Link href="/majstori" className="flex items-center justify-center w-full">
               <Search className="mr-2 h-4 w-4" />
               Pronađi majstore
             </Link>
           </Button>
-          <Button variant="outline" asChild size="lg" className="flex-1">
-            <Link href="/protected">
+          <Button variant="outline" asChild size="lg" className="flex-1 min-h-[50px] h-auto">
+            <Link href="/protected" className="flex items-center justify-center w-full">
               Moj račun
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>

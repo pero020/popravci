@@ -7,10 +7,9 @@ import { onboardingAction } from "@/app/actions";
 import { FormMessage } from "@/components/form-message";
 import OnboardingForm from "@/components/onboarding-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import LocationManager, { LocationState } from "@/components/account/location-manager"; // Import LocationState
 import { Button } from "@/components/ui/button";
-import { saveLocationAction } from "@/app/actions"; // For potential direct save if needed, or use in publish
 import { toast } from "sonner";
+import { TOP_CATEGORIES } from "@/utils/categories";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -49,10 +48,10 @@ export default function OnboardingPage() {
       location: formData.get("location") as string,
       categories: formData.getAll("categories").map(c => c.toString()),
     });
-    setActiveTab("publish");
+    setActiveTab("review");
   };
 
-  // Step 3: Publish handler
+  // Step 2: Publish handler
   const handlePublish = async () => {
     setIsPublishing(true);
     setError(null);
@@ -65,10 +64,8 @@ export default function OnboardingPage() {
       const formData = new FormData();
       formData.append("name", basicInfo.name);
       formData.append("phone", basicInfo.phone);
-      basicInfo.categories.forEach(c => formData.append("categories", c));
-      
-      // Use currentLocationData for the final submission
       formData.append("location", basicInfo.location);
+      basicInfo.categories.forEach(c => formData.append("categories", c));
       
       await onboardingAction(formData);
       router.push("/protected");
@@ -95,10 +92,10 @@ export default function OnboardingPage() {
           Let's set up your professional profile so customers can find you.
         </p>
       </div>
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3 mb-8">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+        <TabsList className="grid w-full grid-cols-2 mb-8">
           <TabsTrigger value="basic-info">1. Basic Info</TabsTrigger>
-          <TabsTrigger value="publish">3. Publish</TabsTrigger>
+          <TabsTrigger value="review">2. Review</TabsTrigger>
         </TabsList>
         <TabsContent value="basic-info">
           <form onSubmit={handleBasicInfoSubmit} className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 mb-8 space-y-6">
@@ -111,13 +108,13 @@ export default function OnboardingPage() {
               <input className="w-full border rounded px-3 py-2" id="phone" name="phone" type="tel" defaultValue={basicInfo.phone} />
             </div>
             <div>
-              <label className="block font-medium mb-1" htmlFor="location">Phone Number</label>
-              <input className="w-full border rounded px-3 py-2" id="locaiton" name="phlocationone" defaultValue={basicInfo.location} />
+              <label className="block font-medium mb-1" htmlFor="location">Location</label>
+              <input className="w-full border rounded px-3 py-2" id="location" name="location" defaultValue={basicInfo.location} />
             </div>
             <div>
               <label className="block font-medium mb-1">Services Offered</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                {['Plumbing', 'Electrical', 'Carpentry', 'Painting', 'HVAC', 'Appliance Repair', 'Landscaping', 'Cleaning', 'Moving', 'Roofing', 'Flooring', 'General Contractor'].map((category) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {TOP_CATEGORIES.map((category) => (
                   <label key={category} className="flex items-center gap-2">
                     <input
                       type="checkbox"
@@ -135,20 +132,23 @@ export default function OnboardingPage() {
             </div>
           </form>
         </TabsContent>
-        <TabsContent value="publish">
+        <TabsContent value="review">
           <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 mb-8 space-y-6">
             <h2 className="text-xl font-semibold mb-4">Review & Publish</h2>
-            <div>
-              <h3 className="font-medium mb-1">Basic Info</h3>
-              <div>Name: {basicInfo.name}</div>
-              <div>Phone: {basicInfo.phone}</div>
-              <div>Categories: {basicInfo.categories.join(", ")}</div>
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-medium mb-1">Profile Information</h3>
+                <div className="text-slate-600">Name: {basicInfo.name}</div>
+                <div className="text-slate-600">Phone: {basicInfo.phone}</div>
+                <div className="text-slate-600">Location: {basicInfo.location}</div>
+                <div className="text-slate-600">Categories: {basicInfo.categories.join(", ")}</div>
+              </div>
             </div>
             {error && <div className="text-red-600">{error}</div>}
             <div className="flex justify-between pt-4">
-              <Button variant="ghost" onClick={() => setActiveTab("location")}>Back</Button>
+              <Button variant="ghost" onClick={() => setActiveTab("basic-info")}>Back</Button>
               <Button onClick={handlePublish} disabled={isPublishing}>
-          {isPublishing ? "Publishing..." : "Publish Profile"}
+                {isPublishing ? "Publishing..." : "Publish Profile"}
               </Button>
             </div>
           </div>
