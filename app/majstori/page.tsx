@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import Link from 'next/link'
 import Image from 'next/image'
-import { TOP_CATEGORIES } from '@/utils/categories'
+import { TOP_CATEGORIES, SERVICE_CATEGORIES } from '@/utils/categories'
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -48,10 +48,123 @@ type Majstor = {
   bio: string
   created_at: string
   profile_picture?: string | null
+  _searchScore?: number // Add search score property for relevance sorting
 }
 
-type SortField = 'name' | 'wait_time_days' | 'location' | 'created_at'
+type SortField = 'name' | 'wait_time_days' | 'location' | 'created_at' | '_searchScore'
 type SortOrder = 'asc' | 'desc'
+
+const emergency_available_tags = ['emergency', 'urgent', 'hitno dostupno', 'odmah', 'sada']
+const weekend_evening_tags = ['night', 'evening', 'vikend', 'navecer', 'vece', 'noc']
+
+// Helper functions for fuzzy searching
+const normalizeText = (text: string): string => {
+  return text ? text.toLowerCase().trim() : '';
+}
+
+// Check if a search term appears partially in text (minimum 3 characters)
+const partialMatch = (term: string, text: string): boolean => {
+  if (!term || !text || term.length < 3) return false;
+  
+  const normalizedTerm = normalizeText(term);
+  const normalizedText = normalizeText(text);
+  
+  // Check for partial matches of at least 3 characters
+  for (let i = 3; i <= normalizedTerm.length; i++) {
+    const substring = normalizedTerm.substring(0, i);
+    if (normalizedText.includes(substring)) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+// Calculate a relevance score for search matches
+const calculateSearchScore = (majstor: Majstor, searchTerms: string[]): number => {
+  if (!searchTerms.length) return 0;
+  
+  // Define field weights (higher = more important)
+  const weights = {
+    name: 10,
+    categories: 8, 
+    subcategories: 3, // Lower weight for subcategories
+    bio: 5,
+    location: 4,
+    service_area: 3,
+    emergency_available: 2,
+    weekend_evening: 2
+  };
+  
+  let totalScore = 0;
+  
+  // Get subcategories for this majstor's categories
+  const subcategories = getAllSubcategories(majstor.categories || []);
+  
+  // Text fields to search in with their weights
+  const fieldsToSearch = [
+    { field: majstor.name || '', weight: weights.name },
+    { field: (majstor.categories || []).join(' '), weight: weights.categories },
+    { field: subcategories.join(' '), weight: weights.subcategories }, // Include subcategories
+    { field: majstor.bio || '', weight: weights.bio },
+    { field: majstor.location || '', weight: weights.location },
+    { field: majstor.service_area || '', weight: weights.service_area },
+    { field: majstor.emergency_available ? 'emergency hitno' : '', weight: weights.emergency_available },
+    { field: majstor.weekend_evening ? 'night weekend evening vikend navecer vece noc' : '', weight: weights.weekend_evening }
+  ];
+  
+  // For each search term
+  searchTerms.forEach(term => {
+    let termScore = 0;
+    
+    // Check each field
+    fieldsToSearch.forEach(({ field, weight }) => {
+      const fieldLower = field.toLowerCase();
+      
+      // Exact match gets highest score
+      if (fieldLower.includes(term)) {
+        termScore += weight * 2; // Double weight for exact matches
+      }
+      // Partial match (at least 3 chars)
+      else if (term.length >= 3 && partialMatch(term, fieldLower)) {
+        termScore += weight;
+      }
+    });
+    
+    totalScore += termScore;
+  });
+  
+  return totalScore;
+}
+
+// Helper function to get subcategories for a main category
+const getSubcategoriesForCategory = (categoryName: string): string[] => {
+  // Remove any numbering from the category name to match the format in SERVICE_CATEGORIES
+  const normalizedCategoryName = categoryName.replace(/^\d+\.\s*/, '');
+  
+  // Find the category in SERVICE_CATEGORIES
+  const category = SERVICE_CATEGORIES.find(cat => 
+    cat.name.replace(/^\d+\.\s*/, '') === normalizedCategoryName || 
+    cat.name === categoryName
+  );
+  
+  // Return subcategory names if found, otherwise empty array
+  return category ? category.subcategories.map(sub => sub.name) : [];
+}
+
+// Helper function to get all subcategories for an array of main categories
+const getAllSubcategories = (categories: string[]): string[] => {
+  if (!categories || categories.length === 0) return [];
+  
+  const allSubcategories: string[] = [];
+  
+  categories.forEach(category => {
+    const subcategories = getSubcategoriesForCategory(category);
+    allSubcategories.push(...subcategories);
+  });
+  
+  return allSubcategories;
+}
 
 export default function MajstoriPage() {
   const [majstori, setMajstori] = useState<Majstor[]>([])
@@ -122,16 +235,57 @@ export default function MajstoriPage() {
   // Apply filters and sorting
   useEffect(() => {
     let results = [...majstori]
+    let defaultSortByRelevance = false
     
-    // Apply search query filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      results = results.filter(majstor => 
-        (majstor.name && majstor.name.toLowerCase().includes(query)) ||
-        (majstor.bio && majstor.bio.toLowerCase().includes(query)) ||
-        (majstor.location && majstor.location.toLowerCase().includes(query)) ||
-        (majstor.service_area && majstor.service_area.toLowerCase().includes(query))
-      )
+    // Apply search query filter with improved fuzzy matching
+    if (searchQuery && searchQuery.trim() !== '') {
+      // Split search query into individual terms for multi-word search
+      const searchTerms = searchQuery.toLowerCase().trim().split(/\s+/).filter(term => term.length > 0);
+      
+      if (searchTerms.length > 0) {
+        results = results.filter(majstor => {
+          // Get subcategories for this majstor's categories (for searching)
+          const subcategories = getAllSubcategories(majstor.categories || []);
+          
+          // Text fields to search in
+          const fieldsToSearch = [
+            majstor.name || '',
+            majstor.bio || '',
+            majstor.location || '',
+            majstor.service_area || '',
+            // Add categories as a joined string for searching
+            (majstor.categories || []).join(' '),
+            // Include subcategories for searching
+            subcategories.join(' '),
+            majstor.emergency_available ? 'emergency hitno' : '',
+            majstor.weekend_evening ? 'night weekend evening vikend navecer vece noc' : ''
+          ];
+          
+          // Count how many terms match
+          const matchedTerms = searchTerms.filter(term => {
+            return fieldsToSearch.some(field => {
+              // Check for exact inclusion or partial match (min 3 chars)
+              const fieldLower = field.toLowerCase();
+              return fieldLower.includes(term) || 
+                    (term.length >= 3 && partialMatch(term, fieldLower));
+            });
+          });
+          
+          // Filter will accept if ANY word matches something
+          return matchedTerms.length > 0;
+        });
+
+        // Calculate search scores for each result
+        results.forEach(majstor => {
+          majstor._searchScore = calculateSearchScore(majstor, searchTerms);
+        });
+        
+        // When searching, we should default sort by relevance
+        defaultSortByRelevance = true;
+      }
+    } else {
+      // Clear search scores when no search query
+      results = results.map(majstor => ({ ...majstor, _searchScore: undefined }));
     }
     
     // Apply category filter
@@ -169,30 +323,49 @@ export default function MajstoriPage() {
       )
     }
     
-    // Apply sorting
+    // Apply sorting - if searching, automatically sort by relevance score
+    const currentSortField = defaultSortByRelevance ? '_searchScore' : sortField;
+    const currentSortOrder = defaultSortByRelevance ? 'desc' : sortOrder;
+    
     results.sort((a, b) => {
-      let valueA = a[sortField]
-      let valueB = b[sortField]
+      let valueA = a[currentSortField];
+      let valueB = b[currentSortField];
+      
+      // Handle undefined values
+      if (valueA === undefined) {
+        valueA = currentSortField === '_searchScore' ? 0 : '';
+      }
+      if (valueB === undefined) {
+        valueB = currentSortField === '_searchScore' ? 0 : '';
+      }
       
       // Handle string comparison
       if (typeof valueA === 'string') {
-        valueA = valueA.toLowerCase()
+        valueA = valueA.toLowerCase();
       }
       if (typeof valueB === 'string') {
-        valueB = valueB.toLowerCase()
+        valueB = valueB.toLowerCase();
       }
       
       if (valueA < valueB) {
-        return sortOrder === 'asc' ? -1 : 1
+        return currentSortOrder === 'asc' ? -1 : 1;
       }
       if (valueA > valueB) {
-        return sortOrder === 'asc' ? 1 : -1
+        return currentSortOrder === 'asc' ? 1 : -1;
       }
-      return 0
-    })
+      
+      // Secondary sort by name if scores are equal
+      if (currentSortField === '_searchScore' && valueA === valueB) {
+        const nameA = (a.name || '').toLowerCase();
+        const nameB = (b.name || '').toLowerCase();
+        return nameA.localeCompare(nameB);
+      }
+      
+      return 0;
+    });
     
-    setFilteredMajstori(results)
-    setCurrentPage(1)
+    setFilteredMajstori(results);
+    setCurrentPage(1);
   }, [majstori, searchQuery, selectedCategories, selectedLanguages, emergencyOnly, weekendEveningOnly, location, sortField, sortOrder])
   
   // Get current page items
@@ -381,132 +554,134 @@ export default function MajstoriPage() {
       </div>
       
       {/* Results */}
-      {loading ? (
-        <div className="flex justify-center items-center h-32">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      ) : (
-        <>
-          {currentItems.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {currentItems.map((majstor) => (
-                <div key={majstor.id} className="bg-card rounded-lg overflow-hidden shadow group hover:shadow-md transition-shadow">
-                  <div className="p-6">
-                    <div className="flex items-start gap-3 mb-4">
-                      <div className="relative h-16 w-16 rounded-full overflow-hidden bg-slate-200 flex-shrink-0">
-                        {majstor.profile_picture ? (
-                          <Image
-                            src={majstor.profile_picture}
-                            alt={majstor.name}
-                            fill
-                            sizes="4rem"
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div className="h-full w-full flex items-center justify-center text-slate-400">
-                            <User className="h-8 w-8" />
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <Link href={`/majstori/${majstor.id}`} className="block">
-                          <h2 className="text-xl font-semibold mb-1 group-hover:text-primary transition-colors">{majstor.name}</h2>
-                        </Link>
-                        
-                        <div className="flex items-start gap-1">
-                          <MapPin className="h-3 w-3 text-muted-foreground mt-0.5" />
-                          <p className="text-sm">{majstor.location || 'Location not specified'}</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {majstor.service_area && (
-                      <p className="text-xs text-muted-foreground mb-3">
-                        Service area: {majstor.service_area}
-                      </p>
-                    )}
-                    
-                    {majstor.categories && majstor.categories.length > 0 && (
-                      <div className="mb-3">
-                        <div className="flex flex-wrap gap-1">
-                          {majstor.categories.slice(0, 3).map((category, index) => (
-                            <Badge key={index} variant="outline">
-                              {category}
-                            </Badge>
-                          ))}
-                          {majstor.categories.length > 3 && (
-                            <Badge variant="outline">+{majstor.categories.length - 3} more</Badge>
+      <div className="min-h-[500px]"> {/* Added fixed minimum height container */}
+        {loading ? (
+          <div className="flex justify-center items-center h-32">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <>
+            {currentItems.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {currentItems.map((majstor) => (
+                  <div key={majstor.id} className="bg-card rounded-lg overflow-hidden shadow group hover:shadow-md transition-shadow">
+                    <div className="p-6">
+                      <div className="flex items-start gap-3 mb-4">
+                        <div className="relative h-16 w-16 rounded-full overflow-hidden bg-slate-200 flex-shrink-0">
+                          {majstor.profile_picture ? (
+                            <Image
+                              src={majstor.profile_picture}
+                              alt={majstor.name}
+                              fill
+                              sizes="4rem"
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center text-slate-400">
+                              <User className="h-8 w-8" />
+                            </div>
                           )}
                         </div>
-                      </div>
-                    )}
-                    
-                    <div className="flex gap-4 mb-3">
-                      {majstor.wait_time_days !== null && (
-                        <div className="flex items-center gap-1 text-xs">
-                          <Clock className="h-3 w-3" />
-                          <span>Wait: {majstor.wait_time_days} days</span>
-                        </div>
-                      )}
-                      
-                      {majstor.emergency_available && (
-                        <div className="flex items-center gap-1 text-xs text-red-500">
-                          <AlertCircle className="h-3 w-3" />
-                          <span>Emergency</span>
-                        </div>
-                      )}
-                      
-                      {majstor.weekend_evening && (
-                        <div className="flex items-center gap-1 text-xs text-blue-500">
-                          <Calendar className="h-3 w-3" />
-                          <span>Weekend/Evening</span>
-                        </div>
-                      )}
-                    </div>
-                    
-                    {majstor.languages && majstor.languages.length > 0 && (
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground mb-3">
-                        <Languages className="h-3 w-3" />
-                        <span>{majstor.languages.join(', ')}</span>
-                      </div>
-                    )}
-                    
-                    {majstor.contacts && majstor.contacts.length > 0 && (
-                      <div className="mt-4">
-                        {majstor.contacts.slice(0, 1).map((contact, index) => (
-                          <div key={index} className="flex items-center gap-2 text-sm">
-                            <Phone className="h-3 w-3" />
-                            <span>{contact}</span>
+                        <div>
+                          <Link href={`/majstori/${majstor.id}`} className="block">
+                            <h2 className="text-xl font-semibold mb-1 group-hover:text-primary transition-colors">{majstor.name}</h2>
+                          </Link>
+                          
+                          <div className="flex items-start gap-1">
+                            <MapPin className="h-3 w-3 text-muted-foreground mt-0.5" />
+                            <p className="text-sm">{majstor.location || 'Location not specified'}</p>
                           </div>
-                        ))}
-                        {majstor.contacts.length > 1 && (
-                          <p className="text-xs text-muted-foreground mt-1">+{majstor.contacts.length - 1} more contact(s)</p>
+                        </div>
+                      </div>
+                      
+                      {majstor.service_area && (
+                        <p className="text-xs text-muted-foreground mb-3">
+                          Service area: {majstor.service_area}
+                        </p>
+                      )}
+                      
+                      {majstor.categories && majstor.categories.length > 0 && (
+                        <div className="mb-3">
+                          <div className="flex flex-wrap gap-1">
+                            {majstor.categories.slice(0, 3).map((category, index) => (
+                              <Badge key={index} variant="outline">
+                                {category}
+                              </Badge>
+                            ))}
+                            {majstor.categories.length > 3 && (
+                              <Badge variant="outline">+{majstor.categories.length - 3} more</Badge>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="flex gap-4 mb-3">
+                        {majstor.wait_time_days !== null && (
+                          <div className="flex items-center gap-1 text-xs">
+                            <Clock className="h-3 w-3" />
+                            <span>Wait: {majstor.wait_time_days} days</span>
+                          </div>
+                        )}
+                        
+                        {majstor.emergency_available && (
+                          <div className="flex items-center gap-1 text-xs text-red-500">
+                            <AlertCircle className="h-3 w-3" />
+                            <span>Emergency</span>
+                          </div>
+                        )}
+                        
+                        {majstor.weekend_evening && (
+                          <div className="flex items-center gap-1 text-xs text-blue-500">
+                            <Calendar className="h-3 w-3" />
+                            <span>Weekend/Evening</span>
+                          </div>
                         )}
                       </div>
-                    )}
-                    
-                    <div className="mt-4 pt-3 border-t">
-                      <Button variant="link" className="p-0 h-auto flex items-center" asChild>
-                        <Link href={`/majstori/${majstor.id}`}>
-                          View Details 
-                          <ArrowRight className="ml-1 h-3 w-3" />
-                        </Link>
-                      </Button>
+                      
+                      {majstor.languages && majstor.languages.length > 0 && (
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground mb-3">
+                          <Languages className="h-3 w-3" />
+                          <span>{majstor.languages.join(', ')}</span>
+                        </div>
+                      )}
+                      
+                      {majstor.contacts && majstor.contacts.length > 0 && (
+                        <div className="mt-4">
+                          {majstor.contacts.slice(0, 1).map((contact, index) => (
+                            <div key={index} className="flex items-center gap-2 text-sm">
+                              <Phone className="h-3 w-3" />
+                              <span>{contact}</span>
+                            </div>
+                          ))}
+                          {majstor.contacts.length > 1 && (
+                            <p className="text-xs text-muted-foreground mt-1">+{majstor.contacts.length - 1} more contact(s)</p>
+                          )}
+                        </div>
+                      )}
+                      
+                      <div className="mt-4 pt-3 border-t">
+                        <Button variant="link" className="p-0 h-auto flex items-center" asChild>
+                          <Link href={`/majstori/${majstor.id}`}>
+                            View Details 
+                            <ArrowRight className="ml-1 h-3 w-3" />
+                          </Link>
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">No majstori found matching your filters.</p>
-              <Button variant="link" onClick={resetFilters} className="mt-2">
-                Reset all filters
-              </Button>
-            </div>
-          )}
-        </>
-      )}
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">No majstori found matching your filters.</p>
+                <Button variant="link" onClick={resetFilters} className="mt-2">
+                  Reset all filters
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
       
       {/* Pagination */}
       {filteredMajstori.length > 0 && (
